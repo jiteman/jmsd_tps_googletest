@@ -1734,7 +1734,7 @@ TEST(Int32FromGTestEnvTest, ReturnsDefaultWhenVariableIsNotSet) {
 // Tests that Int32FromGTestEnv() returns the default value when the
 // environment variable overflows as an Int32.
 TEST(Int32FromGTestEnvTest, DISABLED_ReturnsDefaultWhenValueOverflows) {
-  printf("(expecting 2 warnings)\n");
+//  printf("(expecting 2 warnings)\n");
 
   SetEnv(GTEST_FLAG_PREFIX_UPPER_ "TEMP", "12345678987654321");
   EXPECT_EQ(20, Int32FromGTestEnv("temp", 20));
@@ -1746,7 +1746,7 @@ TEST(Int32FromGTestEnvTest, DISABLED_ReturnsDefaultWhenValueOverflows) {
 // Tests that Int32FromGTestEnv() returns the default value when the
 // environment variable does not represent a valid decimal integer.
 TEST(Int32FromGTestEnvTest, ReturnsDefaultWhenValueIsInvalid) {
-  printf("(expecting 2 warnings)\n");
+//  printf("(expecting 2 warnings)\n");
 
   SetEnv(GTEST_FLAG_PREFIX_UPPER_ "TEMP", "A1");
   EXPECT_EQ(40, Int32FromGTestEnv("temp", 40));
@@ -1785,7 +1785,7 @@ TEST(ParseInt32FlagTest, ReturnsFalseForInvalidFlag) {
 // Tests that ParseInt32Flag() returns false and doesn't change the
 // output value when the flag overflows as an Int32.
 TEST(ParseInt32FlagTest, ReturnsDefaultWhenValueOverflows) {
-  printf("(expecting 2 warnings)\n");
+//  printf("(expecting 2 warnings)\n");
 
   Int32 value = 123;
   EXPECT_FALSE(ParseInt32Flag("--abc=12345678987654321", "abc", &value));
@@ -1799,7 +1799,7 @@ TEST(ParseInt32FlagTest, ReturnsDefaultWhenValueOverflows) {
 // output value when the flag does not represent a valid decimal
 // integer.
 TEST(ParseInt32FlagTest, ReturnsDefaultWhenValueIsInvalid) {
-  printf("(expecting 2 warnings)\n");
+//  printf("(expecting 2 warnings)\n");
 
   Int32 value = 123;
   EXPECT_FALSE(ParseInt32Flag("--abc=A1", "abc", &value));
@@ -5442,7 +5442,7 @@ class SetUpTestSuiteTest : public Test {
   // This will be called once before the first test in this test case
   // is run.
   static void SetUpTestSuite() {
-    printf("Setting up the test suite . . .\n");
+//    printf("Setting up the test suite . . .\n");
 
     // Initializes some shared resource.  In this simple example, we
     // just create a C string.  More complex stuff can be done if
@@ -5459,7 +5459,7 @@ class SetUpTestSuiteTest : public Test {
   // This will be called once after the last test in this test case is
   // run.
   static void TearDownTestSuite() {
-    printf("Tearing down the test suite . . .\n");
+//    printf("Tearing down the test suite . . .\n");
 
     // Decrements the number of test suites that have been set up.
     counter_--;

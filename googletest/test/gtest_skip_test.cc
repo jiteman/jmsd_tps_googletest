@@ -34,7 +34,7 @@
 
 using ::testing::Test;
 
-TEST(SkipTest, DoesSkip) {
+TEST(SkipTest, DISABLED_DoesSkip) {
   GTEST_SKIP();
   EXPECT_EQ(0, 1);
 }
@@ -46,10 +46,10 @@ class Fixture : public Test {
   }
 };
 
-TEST_F(Fixture, SkipsOneTest) {
+TEST_F(Fixture, DISABLED_SkipsOneTest) {
   EXPECT_EQ(5, 7);
 }
 
-TEST_F(Fixture, SkipsAnotherTest) {
+TEST_F(Fixture, DISABLED_SkipsAnotherTest) {
   EXPECT_EQ(99, 100);
 }

@@ -5261,9 +5261,12 @@ bool UnitTestImpl::RunAllTests() {
   }
 # endif  // defined(GTEST_EXTRA_DEATH_TEST_CHILD_SETUP_)
 #endif  // GTEST_HAS_DEATH_TEST
-
+  /*/
   const bool should_shard = ShouldShard(kTestTotalShards, kTestShardIndex,
                                         in_subprocess_for_death_test);
+  /*/
+  const bool should_shard = false;
+  //*/
 
   // Compares the full test names with the filter to decide which
   // tests to run.

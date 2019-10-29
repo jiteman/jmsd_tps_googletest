@@ -1733,7 +1733,7 @@ TEST(Int32FromGTestEnvTest, ReturnsDefaultWhenVariableIsNotSet) {
 
 // Tests that Int32FromGTestEnv() returns the default value when the
 // environment variable overflows as an Int32.
-TEST(Int32FromGTestEnvTest, ReturnsDefaultWhenValueOverflows) {
+TEST(Int32FromGTestEnvTest, DISABLED_ReturnsDefaultWhenValueOverflows) {
   printf("(expecting 2 warnings)\n");
 
   SetEnv(GTEST_FLAG_PREFIX_UPPER_ "TEMP", "12345678987654321");
@@ -1837,7 +1837,7 @@ TEST(Int32FromEnvOrDieTest, ParsesAndReturnsValidValue) {
 
 // Tests that Int32FromEnvOrDie() aborts with an error message
 // if the variable is not an Int32.
-TEST(Int32FromEnvOrDieDeathTest, AbortsOnFailure) {
+TEST(Int32FromEnvOrDieDeathTest, DISABLED_AbortsOnFailure) {
   SetEnv(GTEST_FLAG_PREFIX_UPPER_ "VAR", "xxx");
   EXPECT_DEATH_IF_SUPPORTED(
       Int32FromEnvOrDie(GTEST_FLAG_PREFIX_UPPER_ "VAR", 123),
@@ -1846,7 +1846,7 @@ TEST(Int32FromEnvOrDieDeathTest, AbortsOnFailure) {
 
 // Tests that Int32FromEnvOrDie() aborts with an error message
 // if the variable cannot be represented by an Int32.
-TEST(Int32FromEnvOrDieDeathTest, AbortsOnInt32Overflow) {
+TEST(Int32FromEnvOrDieDeathTest, DISABLED_AbortsOnInt32Overflow) {
   SetEnv(GTEST_FLAG_PREFIX_UPPER_ "VAR", "1234567891234567891234");
   EXPECT_DEATH_IF_SUPPORTED(
       Int32FromEnvOrDie(GTEST_FLAG_PREFIX_UPPER_ "VAR", 123),
@@ -1881,7 +1881,7 @@ class ShouldShardTest : public testing::Test {
 
 // Tests that sharding is disabled if neither of the environment variables
 // are set.
-TEST_F(ShouldShardTest, ReturnsFalseWhenNeitherEnvVarIsSet) {
+TEST_F(ShouldShardTest, DISABLED_ReturnsFalseWhenNeitherEnvVarIsSet) {
   SetEnv(index_var_, "");
   SetEnv(total_var_, "");
 
@@ -1890,7 +1890,7 @@ TEST_F(ShouldShardTest, ReturnsFalseWhenNeitherEnvVarIsSet) {
 }
 
 // Tests that sharding is not enabled if total_shards  == 1.
-TEST_F(ShouldShardTest, ReturnsFalseWhenTotalShardIsOne) {
+TEST_F(ShouldShardTest, DISABLED_ReturnsFalseWhenTotalShardIsOne) {
   SetEnv(index_var_, "0");
   SetEnv(total_var_, "1");
   EXPECT_FALSE(ShouldShard(total_var_, index_var_, false));
@@ -1901,7 +1901,7 @@ TEST_F(ShouldShardTest, ReturnsFalseWhenTotalShardIsOne) {
 // we are not in a death test subprocess.
 // Environment variables are not supported on Windows CE.
 #if !GTEST_OS_WINDOWS_MOBILE
-TEST_F(ShouldShardTest, WorksWhenShardEnvVarsAreValid) {
+TEST_F(ShouldShardTest, DISABLED_WorksWhenShardEnvVarsAreValid) {
   SetEnv(index_var_, "4");
   SetEnv(total_var_, "22");
   EXPECT_TRUE(ShouldShard(total_var_, index_var_, false));
@@ -1923,7 +1923,7 @@ TEST_F(ShouldShardTest, WorksWhenShardEnvVarsAreValid) {
 
 typedef ShouldShardTest ShouldShardDeathTest;
 
-TEST_F(ShouldShardDeathTest, AbortsWhenShardingEnvVarsAreInvalid) {
+TEST_F(ShouldShardDeathTest, DISABLED_AbortsWhenShardingEnvVarsAreInvalid) {
   SetEnv(index_var_, "4");
   SetEnv(total_var_, "4");
   EXPECT_DEATH_IF_SUPPORTED(ShouldShard(total_var_, index_var_, false), ".*");
@@ -1943,7 +1943,7 @@ TEST_F(ShouldShardDeathTest, AbortsWhenShardingEnvVarsAreInvalid) {
 
 // Tests that ShouldRunTestOnShard is a partition when 5
 // shards are used.
-TEST(ShouldRunTestOnShardTest, IsPartitionWhenThereAreFiveShards) {
+TEST(ShouldRunTestOnShardTest, DISABLED_IsPartitionWhenThereAreFiveShards) {
   // Choose an arbitrary number of tests and shards.
   const int num_tests = 17;
   const int num_shards = 5;
@@ -5381,7 +5381,7 @@ class SetUpTestCaseTest : public Test {
   // This will be called once before the first test in this test case
   // is run.
   static void SetUpTestCase() {
-    printf("Setting up the test case . . .\n");
+ //   printf("Setting up the test case . . .\n");
 
     // Initializes some shared resource.  In this simple example, we
     // just create a C string.  More complex stuff can be done if
@@ -5398,7 +5398,7 @@ class SetUpTestCaseTest : public Test {
   // This will be called once after the last test in this test case is
   // run.
   static void TearDownTestCase() {
-    printf("Tearing down the test case . . .\n");
+//    printf("Tearing down the test case . . .\n");
 
     // Decrements the number of test cases that have been set up.
     counter_--;

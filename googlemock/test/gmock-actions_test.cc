@@ -780,7 +780,7 @@ TEST(DoDefaultDeathTest, DiesForUnknowType) {
 
 void VoidFunc(bool /* flag */) {}
 
-TEST(DoDefaultDeathTest, DiesIfUsedInCompositeAction) {
+TEST(DoDefaultDeathTest, DISABLED_DiesIfUsedInCompositeAction) {
   MockClass mock;
   EXPECT_CALL(mock, IntFunc(_))
       .WillRepeatedly(DoAll(Invoke(VoidFunc),

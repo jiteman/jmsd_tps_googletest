@@ -53,6 +53,7 @@
 #include <ctype.h>
 #include <float.h>
 #include <string.h>
+#include <cstdint>
 #include <iomanip>
 #include <limits>
 #include <map>
@@ -825,6 +826,16 @@ struct GTEST_API_ ConstCharPtr {
   const char* value;
 };
 
+// Helper for declaring std::string within 'if' statement
+// in pre C++17 build environment.
+struct GTEST_API_ TrueWithString {
+  TrueWithString() = default;
+  explicit TrueWithString(const char* str) : value(str) {}
+  explicit TrueWithString(const std::string& str) : value(str) {}
+  explicit operator bool() const { return true; }
+  std::string value;
+};
+
 // A simple Linear Congruential Generator for generating random
 // numbers with a uniform distribution.  Unlike rand() and srand(), it
 // doesn't use global state (and therefore can't interfere with user
@@ -832,18 +843,18 @@ struct GTEST_API_ ConstCharPtr {
 // but it's good enough for our purposes.
 class GTEST_API_ Random {
  public:
-  static const UInt32 kMaxRange = 1u << 31;
+  static const uint32_t kMaxRange = 1u << 31;
 
-  explicit Random(UInt32 seed) : state_(seed) {}
+  explicit Random(uint32_t seed) : state_(seed) {}
 
-  void Reseed(UInt32 seed) { state_ = seed; }
+  void Reseed(uint32_t seed) { state_ = seed; }
 
   // Generates a random number from [0, range).  Crashes if 'range' is
   // 0 or greater than kMaxRange.
-  UInt32 Generate(UInt32 range);
+  uint32_t Generate(uint32_t range);
 
  private:
-  UInt32 state_;
+  uint32_t state_;
   GTEST_DISALLOW_COPY_AND_ASSIGN_(Random);
 };
 
@@ -1175,7 +1186,7 @@ struct FlatTupleBase<FlatTuple<T...>, IndexSequence<Idx...>>
 
 // Analog to std::tuple but with different tradeoffs.
 // This class minimizes the template instantiation depth, thus allowing more
-// elements that std::tuple would. std::tuple has been seen to require an
+// elements than std::tuple would. std::tuple has been seen to require an
 // instantiation depth of more than 10x the number of elements in some
 // implementations.
 // FlatTuple and ElemFromList are not recursive and have a fixed depth
@@ -1186,7 +1197,8 @@ template <typename... T>
 class FlatTuple
     : private FlatTupleBase<FlatTuple<T...>,
                             typename MakeIndexSequence<sizeof...(T)>::type> {
-  using Indices = typename FlatTuple::FlatTupleBase::Indices;
+  using Indices = typename FlatTupleBase<
+      FlatTuple<T...>, typename MakeIndexSequence<sizeof...(T)>::type>::Indices;
 
  public:
   FlatTuple() = default;
@@ -1284,19 +1296,39 @@ constexpr bool InstantiateTypedTestCase_P_IsDeprecated() { return true; }
     GTEST_CONCAT_TOKEN_(gtest_label_testthrow_, __LINE__): \
       fail(gtest_msg.value)
 
+#if GTEST_HAS_EXCEPTIONS
+
+#define GTEST_TEST_NO_THROW_CATCH_STD_EXCEPTION_() \
+  catch (std::exception const& e) { \
+    gtest_msg.value = ( \
+      "it throws std::exception-derived exception with description: \"" \
+    ); \
+    gtest_msg.value += e.what(); \
+    gtest_msg.value += "\"."; \
+    goto GTEST_CONCAT_TOKEN_(gtest_label_testnothrow_, __LINE__); \
+  }
+
+#else  // GTEST_HAS_EXCEPTIONS
+
+#define GTEST_TEST_NO_THROW_CATCH_STD_EXCEPTION_()
+
+#endif  // GTEST_HAS_EXCEPTIONS
+
 #define GTEST_TEST_NO_THROW_(statement, fail) \
   GTEST_AMBIGUOUS_ELSE_BLOCKER_ \
-  if (::testing::internal::AlwaysTrue()) { \
+  if (::testing::internal::TrueWithString gtest_msg{}) { \
     try { \
       GTEST_SUPPRESS_UNREACHABLE_CODE_WARNING_BELOW_(statement); \
     } \
+    GTEST_TEST_NO_THROW_CATCH_STD_EXCEPTION_() \
     catch (...) { \
+      gtest_msg.value = "it throws."; \
       goto GTEST_CONCAT_TOKEN_(gtest_label_testnothrow_, __LINE__); \
     } \
   } else \
     GTEST_CONCAT_TOKEN_(gtest_label_testnothrow_, __LINE__): \
-      fail("Expected: " #statement " doesn't throw an exception.\n" \
-           "  Actual: it throws.")
+      fail(("Expected: " #statement " doesn't throw an exception.\n" \
+            "  Actual: " + gtest_msg.value).c_str())
 
 #define GTEST_TEST_ANY_THROW_(statement, fail) \
   GTEST_AMBIGUOUS_ELSE_BLOCKER_ \

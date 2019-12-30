@@ -407,6 +407,66 @@ void AssertHelper::operator=(const Message& message) const {
                       );  // NOLINT
 }
 
+namespace {
+
+// When TEST_P is found without a matching INSTANTIATE_TEST_SUITE_P
+// to creates test cases for it, a syntetic test case is
+// inserted to report ether an error or a log message.
+//
+// This configuration bit will likely be removed at some point.
+constexpr bool kErrorOnUninstantiatedParameterizedTest = false;
+
+// A test that fails at a given file/line location with a given message.
+class FailureTest : public Test {
+ public:
+  explicit FailureTest(const CodeLocation& loc, std::string error_message,
+                       bool as_error)
+      : loc_(loc),
+        error_message_(std::move(error_message)),
+        as_error_(as_error) {}
+
+  void TestBody() override {
+    if (as_error_) {
+      AssertHelper(TestPartResult::kNonFatalFailure, loc_.file.c_str(),
+                   loc_.line, "") = Message() << error_message_;
+    } else {
+      std::cout << error_message_ << std::endl;
+    }
+  }
+
+ private:
+  const CodeLocation loc_;
+  const std::string error_message_;
+  const bool as_error_;
+};
+
+
+}  // namespace
+
+// If this parameterized test suite has no instantiations (and that
+// has not been marked as okay), emit a test case reporting that.
+void InsertSyntheticTestCase(const std::string &name, CodeLocation location) {
+  std::string message =
+      "Paramaterized test suite " + name +
+      " is defined via TEST_P, but never instantiated. None of the test cases "
+      "will run. Either no INSTANTIATE_TEST_SUITE_P is provided or the only "
+      "ones provided expand to nothing."
+      "\n\n"
+      "Ideally, TEST_P definitions should only ever be included as part of "
+      "binaries that intend to use them. (As opposed to, for example, being "
+      "placed in a library that may be linked in to get other utilities.)";
+
+  std::string full_name = "UninstantiatedParamaterizedTestSuite<" + name + ">";
+  RegisterTest(  //
+      "GoogleTestVerification", full_name.c_str(),
+      nullptr,  // No type parameter.
+      nullptr,  // No value parameter.
+      location.file.c_str(), location.line, [message, location] {
+        return new FailureTest(location, message,
+                               kErrorOnUninstantiatedParameterizedTest);
+      });
+}
+
 // A copy of all command line arguments.  Set by InitGoogleTest().
 static ::std::vector<std::string> g_argvs;
 
@@ -3138,6 +3198,7 @@ class PrettyUnitTestResultPrinter : public TestEventListener {
 
  private:
   static void PrintFailedTests(const UnitTest& unit_test);
+  static void PrintFailedTestSuites(const UnitTest& unit_test);
   static void PrintSkippedTests(const UnitTest& unit_test);
 };
 
@@ -3290,9 +3351,8 @@ void PrettyUnitTestResultPrinter::OnEnvironmentsTearDownStart(
 // Internal helper for printing the list of failed tests.
 void PrettyUnitTestResultPrinter::PrintFailedTests(const UnitTest& unit_test) {
   const int failed_test_count = unit_test.failed_test_count();
-  if (failed_test_count == 0) {
-    return;
-  }
+  ColoredPrintf(COLOR_RED,  "[  FAILED  ] ");
+  printf("%s, listed below:\n", FormatTestCount(failed_test_count).c_str());
 
   for (int i = 0; i < unit_test.total_test_suite_count(); ++i) {
     const TestSuite& test_suite = *unit_test.GetTestSuite(i);
@@ -3309,6 +3369,30 @@ void PrettyUnitTestResultPrinter::PrintFailedTests(const UnitTest& unit_test) {
       PrintFullTestCommentIfPresent(test_info);
       printf("\n");
     }
+  }
+  printf("\n%2d FAILED %s\n", failed_test_count,
+         failed_test_count == 1 ? "TEST" : "TESTS");
+}
+
+// Internal helper for printing the list of test suite failures not covered by
+// PrintFailedTests.
+void PrettyUnitTestResultPrinter::PrintFailedTestSuites(
+    const UnitTest& unit_test) {
+  int suite_failure_count = 0;
+  for (int i = 0; i < unit_test.total_test_suite_count(); ++i) {
+    const TestSuite& test_suite = *unit_test.GetTestSuite(i);
+    if (!test_suite.should_run()) {
+      continue;
+    }
+    if (test_suite.ad_hoc_test_result().Failed()) {
+      ColoredPrintf(COLOR_RED, "[  FAILED  ] ");
+      printf("%s: SetUpTestSuite or TearDownTestSuite\n", test_suite.name());
+      ++suite_failure_count;
+    }
+  }
+  if (suite_failure_count > 0) {
+    printf("\n%2d FAILED TEST %s\n", suite_failure_count,
+           suite_failure_count == 1 ? "SUITE" : "SUITES");
   }
 }
 
@@ -3357,19 +3441,14 @@ void PrettyUnitTestResultPrinter::OnTestIterationEnd(const UnitTest& unit_test,
     PrintSkippedTests(unit_test);
   }
 
-  int num_failures = unit_test.failed_test_count();
   if (!unit_test.Passed()) {
-    const int failed_test_count = unit_test.failed_test_count();
-    ColoredPrintf(COLOR_RED,  "[  FAILED  ] ");
-    printf("%s, listed below:\n", FormatTestCount(failed_test_count).c_str());
     PrintFailedTests(unit_test);
-    printf("\n%2d FAILED %s\n", num_failures,
-                        num_failures == 1 ? "TEST" : "TESTS");
+    PrintFailedTestSuites(unit_test);
   }
 
   int num_disabled = unit_test.reportable_disabled_test_count();
   if (num_disabled && !GTEST_FLAG(also_run_disabled_tests)) {
-    if (!num_failures) {
+    if (unit_test.Passed()) {
       printf("\n");  // Add a spacer if no FAILURE banner is displayed.
     }
     ColoredPrintf(COLOR_YELLOW,
